@@ -5,6 +5,7 @@ import validateSignUpData from './utils/validation.js'
 import bcrypt from 'bcrypt'
 import jwt from 'jsonwebtoken'
 import cookieParser from 'cookie-parser';
+import userAuth from './middleware/auth.js';
 const app = express();
 const PORT = 5000;
 
@@ -17,7 +18,6 @@ app.post('/signup', async (req,res)=>{
     const {firstName, lastName, email, password} = req.body;
 
     const hashpassword = await bcrypt.hash(password,10);
-      console.log(hashpassword)
 
      const userDetail = new User({
       firstName,
@@ -40,16 +40,15 @@ app.post('/login', async (req,res)=>{
     if(!user){
       throw new Error("invalid user")
     }
-    const checkPassword = await bcrypt.compare(password, user.password);
+    const checkPassword = await user.validatePassword(password);
     if(checkPassword)
     {
-      const token = await jwt.sign({_id: user._id}, "secret_key");
+      const token = await user.getJWT();
       res.cookie("token",token);
-      console.log(token)
-      res.send("login successful")
+      res.send("login successful");
     }
     else{
-      res.send("login unsuccess")
+      res.send("login unsuccess");
     }
   }
   catch(err){
@@ -57,23 +56,11 @@ app.post('/login', async (req,res)=>{
   }
 })
 //check this code ------>
-app.get('/profile', async (req,res)=>{
+app.get('/profile', userAuth, async (req,res)=>{
   try{
-    const cookies = req.cookies;
-
-    const {token} = cookies;
-
-    console.log("hello",token)
-    if(!token){
-      throw new Error("token is not present");
-    }
-    const decodeMessage = await jwt.verify(token, "secret_key")
-     const {_id} = decodeMessage;
-
-     const user = await User.findById(_id)
-     if(!user)
-      throw new Error("user does not exist")
-    res.send(user)
+   
+    const user = req.user;
+    res.send(user);
   }
   catch(err){
     res.send("something get wrong");
