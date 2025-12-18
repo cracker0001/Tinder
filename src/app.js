@@ -1,71 +1,17 @@
 import express from 'express'
 import connectDB from './config/database.js';
 import User from './models/user.js';
-import validateSignUpData from './utils/validation.js'
-import bcrypt from 'bcrypt'
-import jwt from 'jsonwebtoken'
 import cookieParser from 'cookie-parser';
-import userAuth from './middleware/auth.js';
+import authRouter from './routes/auth.js';
+import profileRouter from './routes/profile.js';
 const app = express();
 const PORT = 5000;
 
 app.use(express.json());
 app.use(cookieParser());
 
-app.post('/signup', async (req,res)=>{
-  try{
-   validateSignUpData(req);
-    const {firstName, lastName, email, password} = req.body;
-
-    const hashpassword = await bcrypt.hash(password,10);
-
-     const userDetail = new User({
-      firstName,
-      lastName,
-      email,
-      password: hashpassword,
-     });
-    await userDetail.save();
-   res.send("data stored")
-  }
-  catch(err){
-    res.send("something wrong" + err.message);
-  }
-})
-
-app.post('/login', async (req,res)=>{
-  const {email, password} = req.body;
-  try{
-    const user = await User.findOne({email: email});
-    if(!user){
-      throw new Error("invalid user")
-    }
-    const checkPassword = await user.validatePassword(password);
-    if(checkPassword)
-    {
-      const token = await user.getJWT();
-      res.cookie("token",token);
-      res.send("login successful");
-    }
-    else{
-      res.send("login unsuccess");
-    }
-  }
-  catch(err){
-    res.send("something is wrong");
-  }
-})
-//check this code ------>
-app.get('/profile', userAuth, async (req,res)=>{
-  try{
-   
-    const user = req.user;
-    res.send(user);
-  }
-  catch(err){
-    res.send("something get wrong");
-  }
-})
+app.use('/',authRouter);
+app.use('/',profileRouter);
 app.get('/user', async (req,res)=>{
    
   try{
@@ -112,6 +58,7 @@ app.patch('/user', async (req,res)=>{
   res.send("error update")
  }
 })
+
 
 connectDB()
   .then(
