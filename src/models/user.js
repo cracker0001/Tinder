@@ -32,7 +32,16 @@ const userSchema = new mongoose.Schema({
     },
     age:{
       type: Number,
-    }
+    },
+    gender:{
+      type: String,
+      enum: {
+        values: [
+          "male", "female", "other"
+        ],
+        message: `{VALUE} is not gender type`
+      },
+    },
     
 })
 

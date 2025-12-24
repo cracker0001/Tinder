@@ -1,6 +1,6 @@
 import express from 'express';
 const authRouter = express.Router();
-import validateSignUpData from '../utils/validation.js'
+import {validateSignUpData} from '../utils/validation.js'
 import bcrypt from 'bcrypt'
 import User from '../models/user.js';
 
@@ -46,4 +46,14 @@ authRouter.post('/login', async (req,res)=>{
     res.send("something is wrong");
   }
 })
+
+authRouter.post('/logout',(req,res)=>{
+  res.cookie("token",null,{
+    expires: new Date(Date.now())
+  }
+  );
+  res.send("logout successful");
+});
+
+
 export default authRouter;
